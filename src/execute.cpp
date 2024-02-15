@@ -197,155 +197,170 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
         break;
       }
       case 1: {
-        // RV32I: SLL
-        // TODO: rddata.i = ?
-        break;
-      }
-      case 2: {
-        // RV32I: SLT
-        // TODO: rddata.i = ?
-        break;
-      }
-      case 3: {
-        // RV32I: SLTU
-        // TODO: rddata.i = ?
-        break;
-      }
-      case 4: {
-        // RV32I: XOR
-        // TODO: rddata.i = ?
-        break;
-      }
-      case 5: {
-        if (func7) {
-          // RV32I: SRA
-          // TODO: rddata.i = ?
-        } else {
-          // RV32I: SRL
-          // TODO: rddata.i = ?
+            // RV32I: SLL
+            rddata.i = rsdata[0].i << (rsdata[1].i & 0x1F);
+            break;
         }
-        break;
-      }
-      case 6: {
-        // RV32I: OR
-        // TODO: rddata.i = ?
-        break;
-      }
-      case 7: {
-        // RV32I: AND
-        // TODO: rddata.i = ?
-        break;
-      }
-      default:
-        std::abort();
-      }
-    }    
+        case 2: {
+            // RV32I: SLT
+            rddata.i = rsdata[0].i < rsdata[1].i;
+            break;
+        }
+        case 3: {
+            // RV32I: SLTU
+            rddata.u = rsdata[0].u < rsdata[1].u;
+            break;
+        }
+        case 4: {
+            // RV32I: XOR
+            rddata.i = rsdata[0].i ^ rsdata[1].i;
+            break;
+        }
+        case 5: {
+            if (func7 == 0) {
+                // RV32I: SRL
+                rddata.u = rsdata[0].u >> (rsdata[1].i & 0x1F);
+            } else {
+                // RV32I: SRA
+                rddata.i = rsdata[0].i >> (rsdata[1].i & 0x1F);
+            }
+            break;
+        }
+        case 6: {
+            // RV32I: OR
+            rddata.i = rsdata[0].i | rsdata[1].i;
+            break;
+        }
+        case 7: {
+            // RV32I: AND
+            rddata.i = rsdata[0].i & rsdata[1].i;
+            break;
+        }
+        default:
+            std::abort();
+    }
     rd_write = true;
     break;
-  }
+}
   case I_INST: {
     trace->exe_type = ExeType::ALU;    
     trace->alu_type = AluType::ARITH;    
     trace->used_regs.set(rsrc0);
     switch (func3) {
     case 0: {
-      // RV32I: ADDI
-      // TODO: rddata.i = ?
-      break;
-    }
-    case 1: {
-      // RV32I: SLLI
-      // TODO: rddata.i = ?
-      break;
-    }
-    case 2: {
-      // RV32I: SLTI
-      // TODO: rddata.i = ?
-      break;
-    }
-    case 3: {
-      // RV32I: SLTIU
-      // TODO: rddata.i = ?
-      break;
-    } 
-    case 4: {
-      // RV32I: XORI
-      // TODO: rddata.i = ?
-      break;
-    }
-    case 5: {
-      if (func7) {
-        // RV32I: SRAI
-        // TODO: rddata.i = ?
-      } else {
-        // RV32I: SRLI
-        // TODO: rddata.i = ?
-      }
-      break;
-    }
-    case 6: {
-      // RV32I: ORI
-      // TODO: rddata.i = ?
-      break;
-    }
-    case 7: {
-      // RV32I: ANDI
-      // TODO: rddata.i = ?
-      break;
-    }
+            // RV32I: ADDI
+            rddata.i = rsdata[0].i + immsrc;
+            break;
+        }
+        case 1: {
+            // RV32I: SLLI
+            rddata.i = rsdata[0].i << (immsrc & 0x1F);
+            break;
+        }
+        case 2: {
+            // RV32I: SLTI
+            rddata.i = rsdata[0].i < immsrc;
+            break;
+        }
+        case 3: {
+            // RV32I: SLTIU
+            rddata.u = rsdata[0].u < static_cast<uint32_t>(immsrc);
+            break;
+        }
+        case 4: {
+            // RV32I: XORI
+            rddata.i = rsdata[0].i ^ immsrc;
+            break;
+        }
+        case 5: {
+            if (func7 == 0) {
+                // RV32I: SRLI
+                rddata.u = rsdata[0].u >> (immsrc & 0x1F);
+            } else {
+                // RV32I: SRAI
+                rddata.i = rsdata[0].i >> (immsrc & 0x1F);
+            }
+            break;
+        }
+        case 6: {
+            // RV32I: ORI
+            rddata.i = rsdata[0].i | immsrc;
+            break;
+        }
+        case 7: {
+            // RV32I: ANDI
+            rddata.i = rsdata[0].i & immsrc;
+            break;
+        }
+        default:
+            std::abort();
     }
     rd_write = true;
     break;
-  }
+}
   case B_INST: {   
     trace->exe_type = ExeType::ALU;    
     trace->alu_type = AluType::BRANCH;    
     trace->used_regs.set(rsrc0);
     trace->used_regs.set(rsrc1);
     switch (func3) {
-    case 0: {
-      // RV32I: BEQ
-      if (rsdata[0].i == rsdata[1].i) {
-        next_pc = PC_ + immsrc;
-      }
-      break;
-    }
-    case 1: {
-      // RV32I: BNE
-      // TODO: next_pc = ?
-      break;
-    }
-    case 4: {
-      // RV32I: BLT
-      // TODO: next_pc = ?
-      break;
-    }
-    case 5: {
-      // RV32I: BGE
-      // TODO: next_pc = ?
-      break;
-    }
-    case 6: {
-      // RV32I: BLTU
-      // TODO: next_pc = ?
-      break;
-    }
-    case 7: {
-      // RV32I: BGEU
-      // TODO: next_pc = ?
-      break;
-    }
-    default:
-      std::abort();
+    switch (func3) {
+        case 0: {
+            // RV32I: BEQ
+            if (rsdata[0].i == rsdata[1].i) {
+                next_pc = PC_ + immsrc;
+            }
+            break;
+        }
+        case 1: {
+            // RV32I: BNE
+            if (rsdata[0].i != rsdata[1].i) {
+                next_pc = PC_ + immsrc;
+            }
+            break;
+        }
+        case 4: {
+            // RV32I: BLT
+            if (rsdata[0].i < rsdata[1].i) {
+                next_pc = PC_ + immsrc;
+            }
+            break;
+        }
+        case 5: {
+            // RV32I: BGE
+            if (rsdata[0].i >= rsdata[1].i) {
+                next_pc = PC_ + immsrc;
+            }
+            break;
+        }
+        case 6: {
+            // RV32I: BLTU
+            if (rsdata[0].u < rsdata[1].u) {
+                next_pc = PC_ + immsrc;
+            }
+            break;
+        }
+        case 7: {
+            // RV32I: BGEU
+            if (rsdata[0].u >= rsdata[1].u) {
+                next_pc = PC_ + immsrc;
+            }
+            break;
+        }
+        default:
+            std::abort();
     }
     break;
-  }  
+}
   case JAL_INST: {
     // RV32I: JAL
     trace->exe_type = ExeType::ALU;    
     trace->alu_type = AluType::BRANCH;
     // rddata.i = ?
     // TODO: next_pc = ?
+    rddata.i = next_pc;
+    next_pc = PC_ + immsrc;
+
     rd_write = true;
     break;
   }  
@@ -356,6 +371,10 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
     trace->used_regs.set(rsrc0);
     // rddata.i = ?
     // TODO: next_pc = ?
+
+    
+     rddata.i = next_pc;
+    next_pc = (rsdata[0].i + immsrc) & ~1;
     rd_write = true;
     break;
   }

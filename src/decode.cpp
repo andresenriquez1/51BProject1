@@ -282,21 +282,39 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
     }
   } break;
 
-  case InstType::S_TYPE: {    
-    // TODO:
-  } break;
+  case InstType::S_TYPE:
+    instr->setDestReg(rd, RegType::None); // Stores do not have a destination register
+    instr->addSrcReg(rs1, RegType::Integer);
+    instr->addSrcReg(rs2, RegType::Integer);
+    // Calculate the immediate value for store instructions
+    auto imm_s = ((code >> 25) & 0x7F) | ((code >> 7) & 0x1F) << 5;
+    // Sign-extend the immediate to 12 bits
+    instr->setImm(sext(imm_s, 12));
+    break;
 
-  case InstType::B_TYPE: {
-    // TODO:
-  } break;
+case InstType::B_TYPE:
+    instr->addSrcReg(rs1, RegType::Integer);
+    instr->addSrcReg(rs2, RegType::Integer);
+    // Calculate the immediate value for branch instructions
+    auto imm_b = ((code >> 31) << 12) | (((code >> 7) & 0x1) << 11) | (((code >> 25) & 0x3F) << 5) | (((code >> 8) & 0xF) << 1);
+    // Sign-extend the immediate to 13 bits
+    instr->setImm(sext(imm_b, 13));
+    break;
 
-  case InstType::U_TYPE: {
-    // TODO:
-  } break;
+case InstType::U_TYPE:
+    // Extract the immediate value for U-type instructions (LUI and AUIPC)
+    auto imm_u = code & 0xFFFFF000;
+    instr->setImm(imm_u);
+    break;
 
-  case InstType::J_TYPE: {
-    // TODO:
-  } break;   
+case InstType::J_TYPE:
+    instr->setDestReg(rd, RegType::Integer);
+    // Calculate the immediate value for jump instructions (JAL)
+    auto imm_j = ((code >> 31) << 20) | (((code >> 12) & 0xFF) << 12) | (((code >> 20) & 0x1) << 11) | (((code >> 21) & 0x3FF) << 1);
+    // Sign-extend the immediate to 21 bits
+    instr->setImm(sext(imm_j, 21));
+    break;
+
 
   default:
     std::abort();
