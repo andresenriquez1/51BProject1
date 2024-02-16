@@ -272,8 +272,30 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
       instr->setSrcReg(0, rs1, RegType::None);
       break;
     case Opcode::I_INST:
-      // TODO:
-      break;
+    // Immediate instruction types (I-type) typically have immediate values as part of their encoding.
+    // In this case, we need to extract the immediate value from the instruction and set it appropriately.
+
+    // The immediate field in I-type instructions is different, so we need to extract it differently.
+    // For RV32I, it's typically a 12-bit immediate value, sign-extended to 32 bits.
+
+    // Extract the immediate value from the instruction code.
+    // In this case, the immediate value is located in the lower 12 bits of the instruction.
+    auto imm_i = code & mask_i_imm;
+
+    // Sign-extend the immediate value to 32 bits.
+    auto sign_extended_imm_i = sext(imm_i, width_i_imm);
+
+    // Set the immediate value to the instruction object.
+    instr->setImm(sign_extended_imm_i);
+
+    // Set the destination register and source register for I-type instructions.
+    instr->setDestReg(rd, RegType::Integer);
+    instr->addSrcReg(rs1, RegType::Integer);
+
+    // No need to set any source register or destination register for the immediate value since it's part of the instruction.
+
+    break;
+
     default:
       // int12
       auto imm = code >> shift_rs2;

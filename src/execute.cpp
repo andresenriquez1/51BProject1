@@ -259,7 +259,9 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
         }
         case 2: {
             // RV32I: SLTI
-            rddata.i = rsdata[0].i < immsrc;
+            rddata.i = rsdata[0].i < static_cast<WordI>(immsrc);
+
+            //rddata.i = rsdata[0].i < immsrc;
             break;
         }
         case 3: {
@@ -303,7 +305,7 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
     trace->alu_type = AluType::BRANCH;    
     trace->used_regs.set(rsrc0);
     trace->used_regs.set(rsrc1);
-    switch (func3) {
+    
     switch (func3) {
         case 0: {
             // RV32I: BEQ
@@ -561,4 +563,5 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
     DP(3, "*** Next PC=0x" << std::hex << next_pc << std::dec);
     PC_ = next_pc;
   }
+}
 }
