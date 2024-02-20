@@ -272,30 +272,10 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
       instr->setSrcReg(0, rs1, RegType::None);
       break;
     case Opcode::I_INST:
-    // Immediate instruction types (I-type) typically have immediate values as part of their encoding.
-    // In this case, we need to extract the immediate value from the instruction and set it appropriately.
-
-    // The immediate field in I-type instructions is different, so we need to extract it differently.
-    // For RV32I, it's typically a 12-bit immediate value, sign-extended to 32 bits.
-
-    // Extract the immediate value from the instruction code.
-    // In this case, the immediate value is located in the lower 12 bits of the instruction.
-    auto imm_i = code & mask_i_imm;
-
-    // Sign-extend the immediate value to 32 bits.
-    auto sign_extended_imm_i = sext(imm_i, width_i_imm);
-
-    // Set the immediate value to the instruction object.
-    instr->setImm(sign_extended_imm_i);
-
-    // Set the destination register and source register for I-type instructions.
-    instr->setDestReg(rd, RegType::Integer);
-    instr->addSrcReg(rs1, RegType::Integer);
-
-    // No need to set any source register or destination register for the immediate value since it's part of the instruction.
-
-    break;
-
+      // TODO:
+      // get immedate value and sign extend
+      instr->setImm(((int32_t)code >> shift_rs2) & mask_i_imm);
+      break;
     default:
       // int12
       auto imm = code >> shift_rs2;
@@ -304,39 +284,68 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
     }
   } break;
 
-  case InstType::S_TYPE:
-    instr->setDestReg(rd, RegType::None); // Stores do not have a destination register
-    instr->addSrcReg(rs1, RegType::Integer);
-    instr->addSrcReg(rs2, RegType::Integer);
-    // Calculate the immediate value for store instructions
-    auto imm_s = ((code >> 25) & 0x7F) | ((code >> 7) & 0x1F) << 5;
-    // Sign-extend the immediate to 12 bits
-    instr->setImm(sext(imm_s, 12));
-    break;
+  case InstType::S_TYPE: {    
+    // TODO:
+    instr->setSrcReg(1, rs2, RegType::None);
 
-case InstType::B_TYPE:
-    instr->addSrcReg(rs1, RegType::Integer);
-    instr->addSrcReg(rs2, RegType::Integer);
-    // Calculate the immediate value for branch instructions
-    auto imm_b = ((code >> 31) << 12) | (((code >> 7) & 0x1) << 11) | (((code >> 25) & 0x3F) << 5) | (((code >> 8) & 0xF) << 1);
-    // Sign-extend the immediate to 13 bits
-    instr->setImm(sext(imm_b, 13));
-    break;
+    // store immediate
+    auto immS = (((int32_t)code >> shift_func2) << width_reg) + (((int32_t)code >> shift_rd) & mask_reg);
+    instr->setImm(immS);
+    // set source register
+    instr->setSrcReg(0, rs1, RegType::Integer);
+  } break;
 
-case InstType::U_TYPE:
-    // Extract the immediate value for U-type instructions (LUI and AUIPC)
-    auto imm_u = code & 0xFFFFF000;
-    instr->setImm(imm_u);
-    break;
+  case InstType::B_TYPE: {
+    // TODO:
 
-case InstType::J_TYPE:
+    // extract immediate from instruction
+    auto imm1B = (((int32_t)code >> (shift_rd + 1)) << 1) & mask_reg; // account for dropped LSB in instruction immediate ; holds 5 bits
+    auto imm2B = ((int32_t)code >> shift_func2) & ((mask_reg << 1) - 1);
+    auto imm3B = ((int32_t)code >> (shift_rd) & 1);
+    auto imm4B = ((int32_t)code >> (shift_func2 + 6));
+
+    // assemble immediate
+    auto immB = imm1B + (imm2B << 5) + (imm3B << 11) + (imm4B << 12);
+    instr->setImm(immB);
+
+    // set func3
+    instr->setFunc3(func3);
+    // set source registers
+    instr->setSrcReg(0, rs1, RegType::Integer);
+    instr->setSrcReg(1, rs2, RegType::Integer);
+  } break;
+
+  case InstType::U_TYPE: {
+    // TODO:
+
+    // set destination register
     instr->setDestReg(rd, RegType::Integer);
-    // Calculate the immediate value for jump instructions (JAL)
-    auto imm_j = ((code >> 31) << 20) | (((code >> 12) & 0xFF) << 12) | (((code >> 20) & 0x1) << 11) | (((code >> 21) & 0x3FF) << 1);
-    // Sign-extend the immediate to 21 bits
-    instr->setImm(sext(imm_j, 21));
-    break;
+    // extra upper immediate bits and fill lower bits with 0s.
+    auto immU = ((int32_t)code >> shift_func3) << width_i_imm;
+    // set immediate for instruction
+    instr->setImm(immU);
 
+  } break;
+
+  case InstType::J_TYPE: {
+    // TODO:
+
+    // extract immediate
+    auto imm1J = ((((int32_t)code >> (shift_rs2 + 1)) << 1) & ((1 << 11) - 1));
+    auto imm2J = ((int32_t)code >> shift_rs2) & 1;
+    auto imm3J = ((int32_t)code >> shift_func3) & ((1 << 8) - 1);
+    auto imm4J = ((int32_t)code >> (shift_func2 + 6));
+
+    // assemble immediate
+    auto immJ = imm1J + (imm2J << 11) + (imm3J << 12) + (imm4J << 20);
+
+    // set immediate
+    instr->setImm(immJ);
+
+    // set destination register
+    instr->setDestReg(rd, RegType::Integer);
+
+  } break;   
 
   default:
     std::abort();
