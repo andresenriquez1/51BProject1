@@ -273,10 +273,8 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
       break;
     case Opcode::I_INST:
       // TODO:
-
-      auto imm = ((int32_t)code >> shift_rs2) & mask_i_imm;
       // get immedate value and sign extend
-      instr->setImm(sext(imm, width_i_imm));
+      instr->setImm(((int32_t)code >> shift_rs2) & mask_i_imm);
       break;
     default:
       // int12
@@ -291,8 +289,8 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
     instr->setSrcReg(1, rs2, RegType::None);
 
     // store immediate
-    auto imm = (((int32_t)code >> shift_func2) << width_reg) + (code >> shift_rd);
-    instr->setImm(imm);
+    auto immS = (((int32_t)code >> shift_func2) << width_reg) + (((int32_t)code >> shift_rd) & mask_reg);
+    instr->setImm(immS);
     // set source register
     instr->setSrcReg(0, rs1, RegType::Integer);
   } break;
@@ -300,25 +298,53 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
   case InstType::B_TYPE: {
     // TODO:
 
-    // pull pieces of immediate
-    auto imm1 = code >> (func3 + 1) & (mask_reg >> 1);
-    auto imm2 = code >> (func2) & mask_reg;
-    auto imm3 = code >> (rd);
-    auto imm4 = code >> func7;
+    // extract immediate from instruction
+    auto imm1B = (((int32_t)code >> (shift_rd + 1)) << 1) & mask_reg; // account for dropped LSB in instruction immediate ; holds 5 bits
+    auto imm2B = ((int32_t)code >> shift_func2) & ((mask_reg << 1) - 1);
+    auto imm3B = ((int32_t)code >> (shift_rd) & 1);
+    auto imm4B = ((int32_t)code >> (shift_func2 + 6));
 
-    // put together immediate value
-    auto imm = (imm4 << 12) + (imm3 << 11) + (imm2 << 4) + imm1;
-    instr->setImm(sext(imm, width_i_imm));
+    // assemble immediate
+    auto immB = imm1B + (imm2B << 5) + (imm3B << 11) + (imm4B << 12);
+    instr->setImm(immB);
 
-    
+    // set func3
+    instr->setFunc3(func3);
+    // set source registers
+    instr->setSrcReg(0, rs1, RegType::Integer);
+    instr->setSrcReg(1, rs2, RegType::Integer);
   } break;
 
   case InstType::U_TYPE: {
     // TODO:
+
+    // set destination register
+    instr->setDestReg(rd, RegType::Integer);
+    // extra upper immediate bits and fill lower bits with 0s.
+    auto immU = ((int32_t)code >> shift_func3) << width_i_imm;
+    // set immediate for instruction
+    instr->setImm(immU);
+
   } break;
 
   case InstType::J_TYPE: {
     // TODO:
+
+    // extract immediate
+    auto imm1J = ((((int32_t)code >> (shift_rs2 + 1)) << 1) & ((1 << 11) - 1));
+    auto imm2J = ((int32_t)code >> shift_rs2) & 1;
+    auto imm3J = ((int32_t)code >> shift_func3) & ((1 << 8) - 1);
+    auto imm4J = ((int32_t)code >> (shift_func2 + 6));
+
+    // assemble immediate
+    auto immJ = imm1J + (imm2J << 11) + (imm3J << 12) + (imm4J << 20);
+
+    // set immediate
+    instr->setImm(immJ);
+
+    // set destination register
+    instr->setDestReg(rd, RegType::Integer);
+
   } break;   
 
   default:
