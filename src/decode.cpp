@@ -274,7 +274,7 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
     case Opcode::I_INST:
       // TODO:
       // get immedate value and sign extend
-      instr->setImm(((int32_t)code >> shift_rs2) & mask_i_imm);
+      instr->setImm(((int32_t)code >> 20) & mask_i_imm);
       break;
     default:
       // int12
@@ -301,7 +301,7 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
     // extract immediate from instruction
     auto imm1B = (((int32_t)code >> (shift_rd + 1)) << 1) & mask_reg; // account for dropped LSB in instruction immediate ; holds 5 bits
     auto imm2B = ((int32_t)code >> shift_func2) & ((mask_reg << 1) - 1);
-    auto imm3B = ((int32_t)code >> (shift_rd) & 1);
+    auto imm3B = ((int32_t)code >> (shift_rd) & 0x1);
     auto imm4B = ((int32_t)code >> (shift_func2 + 6));
 
     // assemble immediate
@@ -332,7 +332,7 @@ std::shared_ptr<Instr> Emulator::decode(uint32_t code) const {
 
     // extract immediate
     auto imm1J = ((((int32_t)code >> (shift_rs2 + 1)) << 1) & ((1 << 11) - 1));
-    auto imm2J = ((int32_t)code >> shift_rs2) & 1;
+    auto imm2J = ((int32_t)code >> shift_rs2) & 0x1;
     auto imm3J = ((int32_t)code >> shift_func3) & ((1 << 8) - 1);
     auto imm4J = ((int32_t)code >> (shift_func2 + 6));
 
