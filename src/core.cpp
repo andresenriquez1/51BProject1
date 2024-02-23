@@ -83,10 +83,22 @@ void Core::id_stage() {
 
   // TODO:
 
-  // check if instruction is BRANCH type
+  // check if instruction is BRANCH type and not CSR type
   if (trace->alu_type == AluType::BRANCH && trace->exe_type != ExeType::CSR) {
+    if (!id_ex_latch_.empty())
+    {
+      auto trace_ex = id_ex_latch_.front();
+      if(trace_ex->exe_type == ExeType::LSU)
+        fetch_stalled_ = true;
+    }
+    if (!ex_mem_latch_.empty())
+    {
+      auto trace_mem = ex_mem_latch_.front();
+      if(trace_mem->exe_type == ExeType::LSU)
+        fetch_stalled_ = true;
+    }
       fetch_stalled_ = true;
-      DT(3, "*** pipeline-fetch stalled!");
+      DT(3, "*** pipeline-decode stalled!");
   }
 
   // move instruction to next stage
@@ -105,16 +117,10 @@ void Core::ex_stage() {
 
   // TODO:
 
-  // if (trace->alu_type == AluType::BRANCH) {
-  //   if ((trace->csr_type != CSRType::CSRRC) && (trace->csr_type != CSRType::CSRRS) && (trace->csr_type != CSRType::CSRRW))
-  //   {
-  //     fetch_stalled_ = true;
-  //     DT(3, "*** pipeline-fetch stalled!");
-  //   }
-  // }
+  // check if instruction is BRANCH type and not CSR type
   if (trace->alu_type == AluType::BRANCH && trace->exe_type != ExeType::CSR) {
       fetch_stalled_ = true;
-      DT(3, "*** pipeline-fetch stalled!");
+      DT(3, "*** pipeline-ex stalled!");
   }
 
   // move instruction to next stage
@@ -133,17 +139,13 @@ void Core::mem_stage() {
 
   // TODO:
 
-  // if (trace->alu_type == AluType::BRANCH) {
-  //   if ((trace->csr_type != CSRType::CSRRC) && (trace->csr_type != CSRType::CSRRS) && (trace->csr_type != CSRType::CSRRW))
-  //   {
-  //     fetch_stalled_ = true;
-  //     DT(3, "*** pipeline-fetch stalled!");
-  //   }
-  // }
-
+  // check if instruction is BRANCH type and not CSR type
   if (trace->alu_type == AluType::BRANCH && trace->exe_type != ExeType::CSR) {
+    if(trace->exe_type != ExeType::LSU)
+    {
       fetch_stalled_ = true;
-      DT(3, "*** pipeline-fetch stalled!");
+      DT(3, "*** pipeline-mem stalled!");
+    }
   }
 
   // move instruction to next stage
