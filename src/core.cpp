@@ -84,9 +84,9 @@ void Core::id_stage() {
   // TODO:
 
   // check if instruction is BRANCH type
-  if (trace->alu_type == AluType::BRANCH) {
-    fetch_stalled_ = true;
-    DT(3, "*** pipeline-fetch stalled!");
+  if (trace->alu_type == AluType::BRANCH && trace->exe_type != ExeType::CSR) {
+      fetch_stalled_ = true;
+      DT(3, "*** pipeline-fetch stalled!");
   }
 
   // move instruction to next stage
@@ -105,9 +105,16 @@ void Core::ex_stage() {
 
   // TODO:
 
-  if (trace->alu_type == AluType::BRANCH) {
-    fetch_stalled_ = true;
-    DT(3, "*** pipeline-fetch stalled!");
+  // if (trace->alu_type == AluType::BRANCH) {
+  //   if ((trace->csr_type != CSRType::CSRRC) && (trace->csr_type != CSRType::CSRRS) && (trace->csr_type != CSRType::CSRRW))
+  //   {
+  //     fetch_stalled_ = true;
+  //     DT(3, "*** pipeline-fetch stalled!");
+  //   }
+  // }
+  if (trace->alu_type == AluType::BRANCH && trace->exe_type != ExeType::CSR) {
+      fetch_stalled_ = true;
+      DT(3, "*** pipeline-fetch stalled!");
   }
 
   // move instruction to next stage
@@ -126,9 +133,17 @@ void Core::mem_stage() {
 
   // TODO:
 
-  if (trace->alu_type == AluType::BRANCH) {
-    fetch_stalled_ = true;
-    DT(3, "*** pipeline-fetch stalled!");
+  // if (trace->alu_type == AluType::BRANCH) {
+  //   if ((trace->csr_type != CSRType::CSRRC) && (trace->csr_type != CSRType::CSRRS) && (trace->csr_type != CSRType::CSRRW))
+  //   {
+  //     fetch_stalled_ = true;
+  //     DT(3, "*** pipeline-fetch stalled!");
+  //   }
+  // }
+
+  if (trace->alu_type == AluType::BRANCH && trace->exe_type != ExeType::CSR) {
+      fetch_stalled_ = true;
+      DT(3, "*** pipeline-fetch stalled!");
   }
 
   // move instruction to next stage
