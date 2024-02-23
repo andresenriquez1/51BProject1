@@ -83,6 +83,12 @@ void Core::id_stage() {
 
   // TODO:
 
+  // check if instruction is BRANCH type
+  if (trace->alu_type == AluType::BRANCH) {
+    fetch_stalled_ = true;
+    DT(3, "*** pipeline-fetch stalled!");
+  }
+
   // move instruction to next stage
   id_ex_latch_.push(trace);
 
@@ -98,6 +104,11 @@ void Core::ex_stage() {
   DT(3, "pipeline-execute: " << *trace);
 
   // TODO:
+
+  if (trace->alu_type == AluType::BRANCH) {
+    fetch_stalled_ = true;
+    DT(3, "*** pipeline-fetch stalled!");
+  }
 
   // move instruction to next stage
   ex_mem_latch_.push(trace);
@@ -115,6 +126,11 @@ void Core::mem_stage() {
 
   // TODO:
 
+  if (trace->alu_type == AluType::BRANCH) {
+    fetch_stalled_ = true;
+    DT(3, "*** pipeline-fetch stalled!");
+  }
+
   // move instruction to next stage
   mem_wb_latch_.push(trace);
 
@@ -130,6 +146,9 @@ void Core::wb_stage() {
   DT(3, "pipeline-writeback: " << *trace);
 
   // TODO:
+
+  if(fetch_stalled_)
+    fetch_stalled_ = false;
 
   assert(perf_stats_.instrs <= issued_instrs_);
   ++perf_stats_.instrs;
