@@ -287,7 +287,7 @@ void Emulator::execute(const Instr &instr, pipeline_trace_t *trace) {
     case 4: {
       // RV32I: XORI
       // TODO: rddata.i = ?
-      rddata.i = rsdata[0].i ^ (immsrc & 0x1F);
+      rddata.i = rsdata[0].i ^ (immsrc);
       break;
     }
     case 5: {
